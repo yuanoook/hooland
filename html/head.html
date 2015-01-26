@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset = "utf-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
+	<title>没名儿空间</title>
+	<link rel="apple-touch-icon-precomposed" href="/file?hash=2639073eefb65d59e5453b399d68adb2">
+    <link rel="shortcut icon" href="/file?hash=67e1614815d29ddcce5f3ed6ef377fc9">
+	<style>
+        body{
+            overflow: hidden;
+            font-family: "Helvetica Neue", Helvetica, "Microsoft Yahei", Arial, "sans-serif";
+            text-align: center;
+            word-break: break-all;
+        }
+		*{
+			margin: 0;
+			padding: 0;
+			border: 0;
+            box-sizing: inherit;
+		}
+        ::selection{
+            color: none;
+            background-color: none;
+        }
+		.full-screen{
+			position: fixed;
+			top: 0;
+			right: 0;
+			left: 0;
+			bottom: 0;
+		}
+        .hide{
+            display: none;
+        }
+        .space{
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+        .rediv{
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            box-shadow: 1px 1px 2px 1px #ccc;
+            background-position: center;
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-color: #fff;
+        }
+        .rediv p{
+            margin: 3px;
+            font-size: 14px;
+            height: 65px;
+            line-height: 22px;
+            overflow: hidden;
+        }
+        .rediv span{
+            display: block;
+            position: absolute;
+            padding: 3px 5px;
+            bottom: 3px;
+            right: 3px;
+            background: white;
+            border: 1px dotted #eee;
+        }
+        .rediv a.download{
+            display: block;
+            position: absolute;
+            height: 20px;
+            padding: 3px 5px;
+            bottom: 3px;
+            right: 3px;
+            left: 3px;
+            background: white;
+            border: 1px dotted #eee;
+        }
+        .rediv span.remove{
+            display: block;
+            position: absolute;
+            width: 25px;
+            height: 25px;
+            line-height: 25px;
+            vertical-align: middle;
+            text-align: center;
+            padding: 3px 3px;
+            top: 3px;
+            right: 3px;
+            background: white;
+            box-shadow: 0 0 2px 1px #fff;
+        }
+        .labs{
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            overflow: visible;
+            z-index: 100000000000;
+        }
+        .labs .wormhole{
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            top: -50px;
+            left: -50px;
+            border-radius: 50%;
+            text-align: center;
+            outline: none;
+            background: #fff;
+            box-shadow: 1px 1px 50px 50px #fff;
+        }
+
+        ul.rightmenu{
+            background: #eee;
+            list-style-type: none;
+            position: absolute;
+        }
+        ul.rightmenu li{
+            margin: 5px;
+        }
+        ul.rightmenu li:hover{
+            cursor: default;
+            display: block;
+            background: #aaa;
+        }
+	</style>
+<script>
+
+!function (E) {
+    E.prototype.css = function () {
+     	if (arguments.length == 1){       
+	    if (typeof arguments[0] == 'string') return this.style[arguments[0]];
+            if (typeof arguments[0] == 'object') {
+                for (i in arguments[0]) {
+                    this.style[i] = arguments[0][i]
+                }
+                return this 
+            }
+        } else if (arguments.length == 2) {
+            this.style[arguments[0]] = arguments[1];
+            return this;
+        }
+    }
+ 
+    E.prototype.attr = function () {
+        if (arguments.length == 1) {
+            if (typeof arguments[0] == 'string') return this.getAttribute(arguments[0]);
+            if (typeof arguments[0] == 'object') {
+                for (i in arguments[0]) {
+                    this.setAttribute(i, arguments[0][i])
+                }
+                return this;
+            }
+        } else if (arguments.length == 2) {
+            this.setAttribute(arguments[0], arguments[1]);
+            return this;
+        }
+    }
+
+    E.prototype.hasClass = function(){
+        return new RegExp('(^|\\s+)'+arguments[0]+'(\\s+|$)').test( this.attr('class') )
+    }
+
+    E.prototype.removeClass = function(){
+        if(!this.hasClass(arguments[0])) return this;
+        return this.attr('class', this.attr('class').replace(new RegExp('(^|\\s+)'+arguments[0]+'(\\s+|$)'),' ').replace(/(^\s*)|(\s*$)/g,""))
+    }
+
+    E.prototype.addClass = function(){
+        if(this.hasClass(arguments[0])) return this;
+        return this.attr('class', this.attr('class').replace(/\s*$/,' ' + arguments[0]).replace(/(^\s*)|(\s*$)/g,""))
+    }
+
+    E.prototype.toggleClass = function(){
+        return this.hasClass(arguments[0]) ? this.removeClass(arguments[0]) : this.addClass(arguments[0]);
+    }
+
+    E.prototype.appendTo = function () {
+        arguments[0].appendChild(this);
+        return this
+    }
+
+    E.prototype.append = function () {
+        this.appendChild(arguments[0]);
+        return this
+    }
+ 
+    E.prototype.on = function () {
+        var that = this;
+        var events = arguments[0].split(' ');
+        var handler = arguments[1];
+        events.forEach(function (event) {
+            that.addEventListener(event, handler);
+        });
+        return this;
+    }
+
+    E.prototype.html = function () {
+        if (arguments.length == 0) {
+            return this.innerHTML
+        } else if (arguments.length == 1) {
+            this.innerHTML = arguments[0];
+            return this;
+        }
+    }
+
+    E.prototype.click = function () {
+        var evt = document.createEvent("HTMLEvents");
+        evt.initEvent("click", true, false);
+        this.dispatchEvent(evt);
+        return this;
+    }
+
+    E.prototype.lclick = function (pos) {
+        var evt = document.createEvent("HTMLEvents");
+        evt.initEvent("lclick", true, false);
+
+        if(pos){
+            this.lclickPos = pos;
+        }
+
+        this.dispatchEvent(evt);
+        return this;
+    }
+
+    E.prototype.remove = function(){
+        this.parentElement.removeChild(this);
+    }
+
+    E.prototype.moveTo = function(pos){
+        var oThis = this.css('z-index', z++);
+        clearInterval(this.timer);
+        this.timer = setInterval(doMove, 30);
+
+        function doMove(){
+            var bEnd = true,
+                cTop = parseInt(oThis.css('top')),
+                cLeft = parseInt(oThis.css('left'));
+
+            var tSpeed = (pos.top - cTop)/4,
+                lSpeed = (pos.left - cLeft)/4;
+
+                tSpeed = tSpeed > 0 ? Math.ceil(tSpeed) : Math.floor(tSpeed);
+                lSpeed = lSpeed > 0 ? Math.ceil(lSpeed) : Math.floor(lSpeed);
+
+            pos.top == cTop || (bEnd = false, oThis.css('top', (parseInt(oThis.css('top')) + tSpeed) + 'px'));
+            pos.left == cLeft || (bEnd = false, oThis.css('left', (parseInt(oThis.css('left')) + lSpeed) + 'px'));
+
+            bEnd && clearInterval(oThis.timer);
+            dontBeShy(oThis);
+        }
+
+        return this;
+    }
+
+    E.prototype.travel = function(pos,speed){
+        tmp.css({
+            top: pos.top + 'px',
+            left: pos.left + 'px'
+        });
+
+        var oThis = this.css('z-index', z++),
+            Gm = 10000,
+            cPos = {
+                top: parseInt(oThis.css('top')),
+                left:parseInt(oThis.css('left'))
+            }
+
+        clearInterval(this.timer);
+        this.timer = setInterval(doMove, 30);
+
+        function doMove(){
+            var r = Math.sqrt( Math.pow(cPos.top-pos.top,2) + Math.pow(cPos.left-pos.left,2) );
+            var g = Gm/(r*r);
+            var a = {
+                v: g*(pos.top - cPos.top)/r,
+                h: g*(pos.left- cPos.left)/r
+            }
+
+            speed.v += a.v;
+            speed.h += a.h;
+
+            cPos = {
+                top: cPos.top + speed.v,
+                left:cPos.left + speed.h
+            }
+            oThis.css({
+                top: cPos.top + 'px',
+                left: cPos.left + 'px'
+            });
+
+            cPos.top==pos.top && cPos.left==pos.left && clearInterval(oThis.timer);
+        }
+    }
+
+}(window.Element);
+
+function ajax(param) {
+    var xmlhttp = new window.XMLHttpRequest;
+    xmlhttp.onreadystatechange = function () {
+        xmlhttp.readyState == 4 && xmlhttp.status == 200 && param.callback && param.callback(this.responseText);
+    }
+ 
+    var queryString = '';
+    for (i in param.data) queryString += (i + '=' + param.data[i] + '&');
+    queryString = queryString.replace(/\&$/, '');
+ 
+    if (param.type.toLowerCase() === 'get') {
+        param.url += ('?' + queryString);
+        xmlhttp.open('get', param.url);
+        xmlhttp.send()
+    } else if (param.type.toLowerCase() === 'post') {
+        xmlhttp.open('post', param.url);
+        xmlhttp.send(queryString);
+    }
+}
+</script>
+
+<!--************************************** 上传/下载/删除  start **************************************-->
+<script>
+
+window.ondragover = function (event) {
+    event.preventDefault();
+}
+
+window.ondrop = function(event){
+    getLocalFile(event);
+}
+
+function getLocalFile(event) {
+    event.preventDefault();
+    var file = event.dataTransfer.files[0];
+    var text = event.dataTransfer.getData('Text').replace(/^\s*|\s*$/g,'');
+    var datarl = event.dataTransfer.getData('URL').replace(/^\s*|\s*$/g,'');
+
+    var posx = event.offsetX-38;
+    var posy = event.offsetY-38;
+    posx = posx - parseInt(yuandiv.css('left'));
+    posy = posy - parseInt(yuandiv.css('top'));
+
+    console.log([posx,posy]);
+
+    if(file){
+        if(file.size>5000000) return;
+        hashMe(file, function (hashCode) {
+            exists(hashCode, prepareToUpload)
+        });
+    }else if(text){
+        file = {
+            name: text + '.tip',
+            type: 'text/tip',
+            size: 1
+        }
+        prepareToUpload(true, '23b58def11b45727d3351702515f86af');
+    }
+
+
+    console.log(file.type);
+
+    function prepareToUpload(isExists, hashCode){
+        var fd = new FormData();
+        fd.append('hash', hashCode);
+        fd.append('posx', posx);
+        fd.append('posy', posy);
+        fd.append('type', file.type);
+        fd.append('size', file.size);
+
+        if(/^image\//.test(file.type)) window.url = window.URL.createObjectURL(file);
+
+        if (!isExists) fd.append('file', file);
+        else fd.append('name', file.name);
+
+        upload(fd);
+    }
+}
+
+function remove(rediv){
+    var result = rediv.result;
+    var id = result['_id'];
+    ajax({
+        type: 'get',
+        url:  '/remove',
+        data: {
+            id: id
+        },
+        callback: function(data){
+            if(data=1){
+                rediv.remove(); 
+                socket.send(JSON.stringify({
+                    remove: true,
+                    _id: id
+                }));
+                return;
+            }
+            alert('哎呀，出错了呀！\n一会儿再试试吧!');
+        }
+    });
+}
+ 
+function upload(fd) {
+ 
+    var xhr = new XMLHttpRequest();
+ 
+    xhr.upload.addEventListener('progress', onProgress);
+ 
+    function onProgress(e) {
+        console.log(e.loaded/e.total);
+    }
+ 
+    xhr.onreadystatechange = function () {
+        xhr.readyState == 4 && xhr.status == 200 && response(this.responseText);
+    }
+
+    xhr.open('POST', '/insert');
+    xhr.send(fd);
+};
+ 
+function response(result) {
+    var result = result;
+    typeof result == 'string' && (result = JSON.parse(result));
+    // console.log(result);
+    result = result.result;
+    if (!result['n']) return alert('哎呀，出错了呀！\n一会儿再试试吧...');
+
+    socket.send(JSON.stringify(result));
+
+    results.push(result);    
+    resultDiv(result);
+}
+
+function exists(hashCode, callback) {
+    ajax({
+        type: 'get',
+        url: '/exists',
+        data: {
+            hash: hashCode
+        },
+        callback: function (data) {
+            data = JSON.parse(data);
+            callback(data.exists, hashCode)
+        }
+    });
+}
+
+function changePosition(_id) {
+    var div = document.querySelector('div[data-_id=\"' + _id + '\"]');
+
+    var arg = div.result;
+    delete arg.div;
+    arg.x = parseInt(div.css('left')) - parseInt(yuandiv.css('left'));
+    arg.y = parseInt(div.css('top')) - parseInt(yuandiv.css('top'));
+
+    if(socket.readyState==1){
+        socket.send(JSON.stringify(arg));
+    }else{
+        socket.tasks.push(function(){
+            socket.send(JSON.stringify(arg));
+        });
+    }
+    div.result.div = div;
+}
+
+function resultDiv(result){
+    var div = result.div || document.createElement('div');
+    var top = parseInt(result.y) + parseInt(yuandiv.css('top'));
+    var left = parseInt(result.x) + parseInt(yuandiv.css('left'));
+    div.css({
+        top: top + 'px',
+        left: left + 'px'
+    });
+
+    div.result = result;
+    result.div = div;
+    div.reUrl = window.url || '/file?hash='+result.h;
+    window.url = '';
+
+    dontBeShy(div,top,left);
+
+    div.attr({
+        'class': 'rediv',
+        'data-_id': result._id,
+        'data-drag': '{onStop:function(){changePosition(\"'+ result._id +'\")}}'
+    });
+
+    space.append(div);
+    window.postMessage('letsDrag', '*');
+    return div;
+}
+
+function dontBeShy(div,top,left){
+    if(div == yuandiv) return div;
+
+    arguments.callee.divs = arguments.callee.divs || [];
+    if( arguments.callee.divs.indexOf(div) > -1 ) return div;
+
+    var top = top || parseInt(div.css('top'));
+    var left = left || parseInt(div.css('left'));
+    if( inClient(top,left) ){
+        arguments.callee.divs.push(div);
+
+        if(/^image\//.test(div.result.t)){
+            var bgurl = div.reUrl;
+            if(div.result.s>100000 && !/^blob/.test(bgurl) && /(jpe?|pn)g/.test(div.result.t)) bgurl+='&thumbnail=true';
+            div.css('background-image','url('+ bgurl +')'); 
+        }else{
+            var content = '<p>'+div.result.n.replace(/\.[^\.]*$/,'')+'</p>'+
+                          '<span>'+div.result.n.replace(/^.*\./,'\.')+'</span>';
+            div.html(content);
+        }
+    }
+
+    return div;
+
+    function inClient(top,left){
+        var maxT = document.documentElement.clientHeight;
+        var maxL = document.documentElement.clientWidth;
+        return top>-100 && left>-100 && top<maxT && left<maxL;
+    }
+}
+
+function letsShow(target){
+    var result = target.result;
+    var img = new Image();
+    var a = document.createElement('a');
+
+    if(/^image\//.test(result.t)){
+
+        if(target.tmpImg){
+            target.tmpImg.remove();
+            target.tmpImg = false;
+            return;
+        }
+
+        target.tmpImg = document.createElement('img');
+        img.src = target.reUrl;
+        if(img.readyState = 'complete') return justShow();
+        img.on('load' ,justShow);
+
+    }else if(/^text\/html$/.test(result.t)){
+
+        a.attr({
+            href: target.reUrl,
+            target: '_blank'})
+        .click();
+
+    }else{
+        //其他文件预览功能
+    }
+
+    function justShow(){
+        var tmpImg = target.tmpImg;
+        tmpImg.src = img.src;
+
+        tmpImg.css({
+            position: 'fixed',
+            maxWidth: document.documentElement.clientWidth+'px',
+            maxHeight: document.documentElement.clientHeight+'px',
+            top: 0,
+            left: 0,
+            zIndex: z++,
+            boxShadow: '1px 1px 20px 20px #eee'
+        });
+
+        tmpImg.attr({
+            'data-drag' : ''
+        }).on('click', function(){
+            if(tmpImg.isClick){
+                tmpImg.remove(),
+                target.tmpImg = false
+            }
+        }).appendTo(space);
+        window.postMessage('letsDrag','*');
+    }
+}
+
+function GOTO(){
+    var name = encodeURIComponent(arguments[0]);
+    var posx = 0,
+        posy = 0,
+        md5;
+
+    if(/^(\-?|\+?)\d*\.?\d*$/.test(name) && !isNaN(parseInt(name))){
+        posx = parseInt(name)*1000;
+    }else if(name!=''){
+        md5 = hex_md5(name).replace(/[^\d]/g,'').substring(0,11);
+        posx = parseInt(md5.substring(0,10))*1000;
+        posy = (parseInt(md5.substring(10))-5 || 5)*1000;
+    }
+        
+    location.hash = posx+'x'+posy;
+
+    var loc = location.hash.replace('#','').split('x').map(function(v,i){return parseInt(v)});
+    yuandiv.css({
+        top: -loc[1] + 'px',
+        left:-loc[0] + 'px'
+    });
+
+    document.title = decodeURIComponent(name) + '的地盘';
+    showMyspace();
+}
+</script>
+
+<!--************************************** drag.live.js  start **************************************-->
+<script>
+
+!function(){
+
+z=1;
+
+function Drag()
+{
+    this.initialize.apply(this, arguments)
+}
+
+Drag.prototype = {
+
+    initialize : function (drag, options)
+    {
+        this.drag = this.$(drag);
+        this._x = this._y = 0;
+        this._moveDrag = this.bind(this, this.moveDrag);
+        this._stopDrag = this.bind(this, this.stopDrag);
+        
+        this.setOptions(options);
+        
+        this.handle = this.$(this.options.handle);
+        this.maxContainer = this.$(this.options.maxContainer);
+        
+        this.maxTop = Math.max(this.maxContainer.clientHeight, this.maxContainer.scrollHeight) - this.drag.offsetHeight;
+        this.maxLeft = Math.max(this.maxContainer.clientWidth, this.maxContainer.scrollWidth) - this.drag.offsetWidth;
+        
+        this.limit = this.options.limit;
+        this.lockX = this.options.lockX;
+        this.lockY = this.options.lockY;
+        this.lock = this.options.lock;
+        
+        this.onStart = function(){ eval('!'+this.options.onStart+'()') };
+        this.onMove = function(){ eval('!'+this.options.onMove+'()') };
+        this.onStop = function(){ eval('!'+this.options.onStop+'()') };
+        
+        this.changeLayout();
+        
+        this.addHandler(this.handle, "mousedown", this.bind(this, this.startDrag));
+        this.addHandler(this.handle, "touchstart", this.bind(this, this.startDrag));
+    },
+    changeLayout : function ()
+    {
+        this.drag.style.top = this.drag.offsetTop + "px";
+        this.drag.style.left = this.drag.offsetLeft + "px";
+        this.drag.style.position = "absolute";
+        this.drag.style.margin = "0"
+    },
+    startDrag : function (event)
+    {
+        this.startTime = new Date().getTime();
+
+        this.handle.style.cursor = "move";
+        var event = event || window.event;
+        
+        this.point(event);
+        this.startState = [this.startTime, this.clientX, this.clientY];
+
+        this._x = this.clientX - this.drag.offsetLeft;
+        this._y = this.clientY - this.drag.offsetTop;
+
+        this.addHandler(document, "mousemove", this._moveDrag);
+        this.addHandler(document, "mouseup", this._stopDrag);
+        this.addHandler(document, "touchmove", this._moveDrag);
+        this.addHandler(document, "touchend", this._stopDrag);
+        
+        this.drag.style.zIndex = z++;
+        event.preventDefault && event.preventDefault();
+        event.cancelBubble = true;
+        this.handle.setCapture && this.handle.setCapture();
+        
+        this.onStart()
+    },
+    moveDrag : function (event)
+    {
+        var event = event || window.event;
+        
+        this.point(event);
+
+        var iTop = this.clientY - this._y;
+        var iLeft = this.clientX - this._x;
+
+        if (this.lock) return;
+        
+        this.limit && (iTop < 0 && (iTop = 0), iLeft < 0 && (iLeft = 0), iTop > this.maxTop && (iTop = this.maxTop), iLeft > this.maxLeft && (iLeft = this.maxLeft));
+        
+        this.lockY || (this.drag.style.top = iTop + "px");
+        this.lockX || (this.drag.style.left = iLeft + "px");
+        
+        event.preventDefault && event.preventDefault();
+        event.cancelBubble = true;
+        
+        this.onMove()
+    },
+    stopDrag : function ()
+    {
+        this.endTime = new Date().getTime();
+        this.handle.style.cursor = "default";
+        this.removeHandler(document, "mousemove", this._moveDrag);
+        this.removeHandler(document, "mouseup", this._stopDrag);
+        this.removeHandler(document, "touchmove", this._moveDrag);
+        this.removeHandler(document, "touchend", this._stopDrag);
+        
+        this.handle.releaseCapture && this.handle.releaseCapture();
+        this.stopState = [this.endTime,this.clientX,this.clientY];
+
+        this.drag.focus();
+        this.onStop();
+
+        this.drag.isLClick = function(){
+            var start = arguments[0],
+                end = arguments[1];
+   		return (Math.abs((end[1] - start[1])*(end[2] - start[2])) < 25 && Math.abs(end[0] - start[0]) > 300);
+        }(this.startState, this.stopState);
+
+        this.drag.isClick = function(){
+            var start = arguments[0],
+                end = arguments[1];
+            return !arguments[2] &&  (Math.abs( (end[0] - start[0])*(end[1] - start[1])*(end[2] - start[2]) ) < 1000);
+        }(this.startState, this.stopState, this.drag.isLClick);
+
+        if(/Mobile/.test(navigator.userAgent) && this.drag.isClick){
+           this.drag.click(); 
+        }
+
+        if(this.drag.isLClick){
+            this.drag.lclick({
+                offsetX: this.offsetX,
+                offsetY: this.offsetY
+            });
+        }
+
+        console.log(['isClick: '+this.drag.isClick,'isLClick: '+this.drag.isLClick]);
+
+    },
+
+    setOptions : function (options)
+    {
+        this.options =
+        {
+            handle:         this.drag,
+            limit:          false,
+            lock:           false,
+            lockX:          false,
+            lockY:          false,
+            maxContainer:   document.documentElement || document.body,
+            onStart:        function () {},
+            onMove:         function () {},
+            onStop:         function () {}
+        };
+        for (var p in options) this.options[p] = options[p]
+    },
+    
+    $ : function (id)
+    {
+        return typeof id === "string" ? document.getElementById(id) : id
+    },
+    addHandler : function (oElement, sEventType, fnHandler)
+    {
+        return oElement.addEventListener(sEventType, fnHandler, false);
+    },
+    removeHandler : function (oElement, sEventType, fnHandler)
+    {
+        return oElement.removeEventListener(sEventType, fnHandler, false);
+    },
+    bind : function (object, fnHandler)
+    {
+        if(fnHandler.bind) return fnHandler.bind(object);
+        return function ()
+        {
+            return fnHandler.apply(object, arguments)
+        }
+    },
+
+    point : function( event ){
+        this.clientX = (event.clientX===0 ? .00001 : event.clientX) || event.targetTouches[0].clientX;
+        this.clientY = (event.clientY===0 ? .00001 : event.clientY) || event.targetTouches[0].clientY;
+        this.offsetX = (event.offsetX===0 ? .00001 : event.offsetX) || event.targetTouches[0].offsetX;
+        this.offsetY = (event.offsetY===0 ? .00001 : event.offsetY) || event.targetTouches[0].offsetY;
+    }
+};
+
+function letsDrag(x){
+    var me = arguments.callee;
+
+    var oDrags = me.oDrags || [];
+    me.oDrags =  document.querySelectorAll("[data-drag]");
+
+    oDrags = [].filter.call(me.oDrags, function(oDrag){
+        return [].indexOf.call(oDrags,oDrag) == -1; 
+    });
+
+    [].forEach.call(oDrags,function(oDrag){
+        eval("options = " + (oDrag.getAttribute('data-drag') || "{}") );
+        new Drag(oDrag,options);
+    })
+}
+
+var addHandler = Drag.prototype.addHandler;
+
+addHandler(window, 'message', function(event){
+    if( event.data == 'letsDrag' ) letsDrag();
+});
+
+addHandler(window, 'load', function(){
+    window.postMessage('letsDrag','*');
+});
+
+}(window);
+</script>
+<!-- drag.live.js -->
+</head>
+<body class="full-screen"> 

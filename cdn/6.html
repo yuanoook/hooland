@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset='utf-8'>
+	<title>虫洞</title>
+<script>
+!function (E) {
+    z = 0;
+    E.prototype.css = function () {
+     	if (arguments.length == 1){       
+	    if (typeof arguments[0] == 'string') return this.style[arguments[0]];
+            if (typeof arguments[0] == 'object') {
+                for (i in arguments[0]) {
+                    this.style[i] = arguments[0][i]
+                }
+                return this 
+            }
+        } else if (arguments.length == 2) {
+            this.style[arguments[0]] = arguments[1];
+            return this;
+        }
+    }
+ 
+    E.prototype.attr = function () {
+        if (arguments.length == 1) {
+            if (typeof arguments[0] == 'string') return this.getAttribute(arguments[0]);
+            if (typeof arguments[0] == 'object') {
+                for (i in arguments[0]) {
+                    this.setAttribute(i, arguments[0][i])
+                }
+                return this;
+            }
+        } else if (arguments.length == 2) {
+            this.setAttribute(arguments[0], arguments[1]);
+            return this;
+        }
+    }
+
+    E.prototype.hasClass = function(){
+        return new RegExp('(^|\\s+)'+arguments[0]+'(\\s+|$)').test( this.attr('class') )
+    }
+
+    E.prototype.removeClass = function(){
+        if(!this.hasClass(arguments[0])) return this;
+        return this.attr('class', this.attr('class') ? this.attr('class').replace(new RegExp('(^|\\s+)'+arguments[0]+'(\\s+|$)'),' ').replace(/(^\s*)|(\s*$)/g,"") : '')
+    }
+
+    E.prototype.addClass = function(){
+        if(this.hasClass(arguments[0])) return this;
+        return this.attr('class', this.attr('class') ? this.attr('class').replace(/\s*$/,' ' + arguments[0]).replace(/(^\s*)|(\s*$)/g,"") : arguments[0])
+    }
+
+    E.prototype.toggleClass = function(){
+        return this.hasClass(arguments[0]) ? this.removeClass(arguments[0]) : this.addClass(arguments[0]);
+    }
+
+    E.prototype.appendTo = function () {
+        arguments[0].appendChild(this);
+        return this
+    }
+
+    E.prototype.append = function () {
+        this.appendChild(arguments[0]);
+        return this
+    }
+ 
+    E.prototype.on = function () {
+        var that = this;
+        var events = arguments[0].split(' ');
+        var handler = arguments[1];
+        events.forEach(function (event) {
+            that.addEventListener(event, handler);
+        });
+        return this;
+    }
+
+    E.prototype.html = function () {
+        if (arguments.length == 0) {
+            return this.innerHTML
+        } else if (arguments.length == 1) {
+            this.innerHTML = arguments[0];
+            return this;
+        }
+    }
+
+    E.prototype.click = function () {
+        var evt = document.createEvent("HTMLEvents");
+        evt.initEvent("click", false, false);
+        this.dispatchEvent(evt);
+        return this;
+    }
+
+    E.prototype.remove = function(){
+        this.parentElement.removeChild(this);
+    }
+
+    E.prototype.moveTo = function(pos,callback){
+        var oThis = this.css('z-index', z++);
+        clearInterval(this.timer);
+        this.timer = setInterval(doMove, 30);
+
+        function doMove(){
+            var bEnd = true,
+                cTop = parseInt(oThis.css('top')),
+                cLeft = parseInt(oThis.css('left'));
+
+            var tSpeed = (pos.top - cTop)/20,
+                lSpeed = (pos.left - cLeft)/20;
+
+                tSpeed = tSpeed > 0 ? Math.ceil(tSpeed) : Math.floor(tSpeed);
+                lSpeed = lSpeed > 0 ? Math.ceil(lSpeed) : Math.floor(lSpeed);
+
+            pos.top == cTop || (bEnd = false, oThis.css('top', (parseInt(oThis.css('top')) + tSpeed) + 'px'));
+            pos.left == cLeft || (bEnd = false, oThis.css('left', (parseInt(oThis.css('left')) + lSpeed) + 'px'));
+
+            if(bEnd){
+                clearInterval(oThis.timer);
+                callback && callback();
+            }
+        }
+
+        return this;
+    }
+
+    E.prototype.fallDown = function(pos,speed,onMove,onStop){
+
+        var oThis = this.css('z-index', z++);
+        times = arguments.callee.times = arguments.callee.times || 0;
+
+        var cPos = pos.cPos;
+
+        var Gm = speed.v0 * speed.v0 * getR(pos,cPos);
+
+        clearInterval(this.timer);
+        this.timer = setInterval(doMove, 30);
+
+        function doMove(){
+
+            var r = getR(cPos,pos);
+                a = Gm/(r*r);
+            var g = {
+                v: a*(pos.top - cPos.top)/r,
+                h: a*(pos.left - cPos.left)/r
+            }
+
+            speed.v += g.v;
+            speed.h += g.h;
+
+            tPos = {
+                top: cPos.top + speed.v,
+                left:cPos.left + speed.h
+            }
+
+            if( getR(cPos,tPos) > getR(cPos,pos)/8 || getR(cPos,pos)<50 ){
+                oThis.css({
+                    top: pos.top + 'px',
+                    left: pos.left + 'px'
+                });
+                clearInterval(oThis.timer);
+                onStop && onStop();
+                return;
+            }else{
+
+            cPos = tPos;
+
+                oThis.css({
+                    top: cPos.top + 'px',
+                    left: cPos.left + 'px'
+                });
+            }
+            // onMove && onMove(10);
+
+            times++;
+
+            // Gm ++;
+
+        }
+    }
+
+    getR = function(pos1,pos2){
+        return Math.sqrt( Math.pow(pos1.top-pos2.top,2) + Math.pow(pos1.left-pos2.left,2) );
+    }
+}(window.Element);
+</script>
+</head>
+<style>
+.star{
+position:fixed;width:10px;height:10px;background:rgba(0,0,0,.5);border-radius:50%;
+}
+</style>
+<body style="overflow:hidden;position:fixed;top:0;left:0;bottom:0;right:0;">
+<div id="wormhole" style="position:fixed;width:100px;height:100px;background: #000;box-shadow: 1px 1px 50px 50px #000;border-radius:50%;"></div>
+<script>
+
+var stars = [],
+    len = /Mobile/.test(navigator.userAgent) ? 250 : 1000,
+    speed = 50,
+    w = document.documentElement.clientWidth,
+    h = document.documentElement.clientHeight;
+
+wormhole.css({
+    top: h/2 - 50 + 'px',
+    left: w/2 - 50 + 'px'
+});
+
+galaxy(len);
+
+function galaxy(n){
+    while(n-- >0){
+        !function(){
+            var star = document.createElement('div');
+            var tR = Math.random(),
+                lR = Math.random();
+
+            var cPos = {top:tR*h, left:lR*w}
+            var pos = {top:h/2, left:w/2, cPos:cPos};
+
+            var r = getR(cPos,pos);
+            var v0 = Math.sqrt(1/r) * speed;
+
+            var hSpeed =  ( (pos.top - cPos.top)/r) * v0;
+            var vSpeed =  (-(pos.left- cPos.left)/r) * v0;
+
+            stars.push(star);
+            star.no = stars.length-1;
+            star.ghosts = [];
+            star.css({
+                top: cPos.top + 'px',
+                left:cPos.left + 'px'
+            })
+            .addClass('star')
+            .appendTo(document.body)
+            .fallDown(
+                pos,
+                {h:hSpeed,v:vSpeed,v0:v0},
+                function(x){
+                    var div = document.createElement('div');
+                    star.ghosts.push(div);
+                    while(star.ghosts.length && star.ghosts.length>x) star.ghosts.shift().remove();
+                    div.addClass('star').attr('style',star.attr('style')).appendTo(document.body);
+                },
+                function(){
+                    while(star.ghosts.length) star.ghosts.pop().remove();
+                    stars.splice(star.no,1);
+                    star.remove();
+                    galaxy(len-stars.length);
+                }
+            );
+        }()
+    }
+}
+
+</script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

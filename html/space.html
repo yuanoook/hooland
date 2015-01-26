@@ -1,0 +1,204 @@
+<div id="space" class="space" data-drag="{onStop: onSpaceMoveStop}">
+    <div id="yuandiv" class="rediv" style="width:0;height:0;top:0;left:0;" ></div>
+</div>
+
+<div id="labs" class="labs hide">
+    <input id="wormhole" class="wormhole" type="text" data-drag="{onStart: onWormholeMoveStart}">
+    <a id="download_btn" class="download hide">下载</a>
+    <span id="remove_btn" class="remove hide">×</span>
+    <input id="mobilefile" type="file">
+</div>
+
+<script src="/cdn/md5.js"></script>
+<script src="/cdn/hashme.js"></script>
+<script>
+
+function onSpaceMoveStop(){
+    var x_change = parseInt(space.css('left')) || 0;
+    var y_change = parseInt(space.css('top')) || 0;
+    var redivs = space.querySelectorAll('.rediv');
+
+    [].forEach.call(redivs,function(div){
+        var top = parseInt(div.css('top')) + y_change;
+        var left = parseInt(div.css('left')) + x_change;
+        div.css({
+            top: top + 'px',
+            left: left + 'px'
+        })
+        dontBeShy(div,top,left);
+    });
+
+    location.hash = -parseInt(yuandiv.css('left')) + 'x' + -parseInt(yuandiv.css('top'));
+    space.attr('style','');
+}
+
+window.onresize = function(){
+    var redivs = space.querySelectorAll('.rediv');
+    [].forEach.call(redivs,function(div){
+        dontBeShy(div);
+    });
+}
+
+window.onclick = function(event){
+    var target = null;
+
+    if(event.target.hasClass('rediv')) target = event.target;
+    else if(event.target.parentElement && event.target.parentElement.hasClass('rediv')) target = event.target.parentElement;
+
+    if(!target || !target.isClick) return;
+
+    letsShow(target);
+    target = null;
+}
+
+mobilefile.on('change',function(){
+    var oEvent = mobilefile.oEvent;
+    oEvent.dataTransfer = {
+        files: mobilefile.files,
+        getData: function(){return''}
+    }
+    getLocalFile(oEvent);
+})
+
+space.on('lclick',function(event){
+    var oEvent = event;
+    var target = null;
+
+    if(event.target == space && /Mobile/.test(navigator.userAgent)){
+        if(space.lclickPos){
+            oEvent.offsetX = space.lclickPos.offsetX;
+            oEvent.offsetY = space.lclickPos.offsetY;
+        }
+
+        mobilefile.oEvent = oEvent;
+        mobilefile.click();
+        return;
+    }
+
+    if(event.target.hasClass('rediv')) target = event.target;
+    else if(event.target.parentElement && event.target.parentElement.hasClass('rediv')) target = event.target.parentElement;
+
+    if(!target || !target.isLClick) return;
+
+    delete target.result.div;
+    download_btn.attr( 'href', target.reUrl+'&download=true&result='+encodeURIComponent(JSON.stringify(target.result)) );
+    target.result.div = target;
+
+    remove_btn.onclick = function(){
+        download_btn.addClass('hide').appendTo(labs);
+        remove_btn.addClass('hide').appendTo(labs);
+        remove(target);
+    };
+
+    download_btn.appendTo(target).removeClass('hide');
+    remove_btn.appendTo(target).removeClass('hide');
+
+    labsTimer = window.labsTimer || null;
+    clearTimeout(labsTimer);
+    labsTimer = setTimeout(function(){
+        download_btn.addClass('hide').appendTo(labs);
+        remove_btn.addClass('hide').appendTo(labs);
+    },1500);
+});
+
+download_btn.on('touchstart mousedown click',function(event){
+    event.cancelBubble = true;
+});
+remove_btn.on('touchstart mousedown click',function(event){
+    event.cancelBubble = true;
+});
+
+wormhole.onkeydown = function(){
+    if(event.keyCode != 13) return;
+    var name = this.value.replace(/^\s*|\s*$/g,'');
+    if( !name ) return;
+    GOTO(name);
+}
+
+wormhole.onclick = function(event){
+    this.focus();
+}
+
+function onWormholeMoveStart(){
+    wormhole.value = '';
+}
+
+!function(){
+    var name = location.pathname.replace(/^\/|\/$/g,'');
+
+    if( !/^#\-?\d*x\-?\d*$/.test(location.hash) ){
+        var posx = 0,
+            posy = 0,
+            md5;
+
+        if(/^(\-?|\+?)\d*\.?\d*$/.test(name) && !isNaN(parseInt(name))){
+            posx = parseInt(name)*1000;
+        }else if(name!=''){
+            md5 = hex_md5(name).replace(/[^\d]/g,'').substring(0,11);
+            posx = parseInt(md5.substring(0,10))*1000;
+            posy = (parseInt(md5.substring(10))-5 || 5)*1000;
+        }
+        
+        location.hash = posx+'x'+posy;
+    }
+
+    var loc = location.hash.replace('#','').split('x').map(function(v,i){return parseInt(v)});
+    yuandiv.css({
+        top: -loc[1] + 'px',
+        left:-loc[0] + 'px'
+    });
+    
+    document.title = name ? decodeURIComponent(name) + '的地盘' : '没名儿空间';
+
+    socket =  new WebSocket('ws://yuanoook.com:7000');
+    socket.tascks = [];
+    socket.onopen = function(){
+        console.log('伦家连好了，感觉棒棒哒...');
+        while(socket.tascks.length) socket.tasks.pop()();
+    }
+    socket.onmessage = function(msg){
+        var result = JSON.parse(msg.data);
+        
+        if(result.remove){
+            var div = document.querySelector('div[data-_id=\"' + result._id + '\"]');
+            div && div.remove();
+            return;
+        }
+
+        if(result[0] != 1) return;
+        result = JSON.parse(result[1]);
+
+        var div = document.querySelector('div[data-_id=\"' + result._id + '\"]');
+    	if(!div){
+    		results.push(result);
+    		return resultDiv(result);
+        }
+        var top = parseInt(result.y) + parseInt(yuandiv.css('top'));
+        var left = parseInt(result.x) + parseInt(yuandiv.css('left'));
+        div.moveTo({
+            top: top,
+            left: left
+        });
+        dontBeShy(div);
+    }
+    socket.onclose = function(){
+        console.log('哎呀，不要断开不要断开，伦家要重连要重连。');
+        setTimeout(function(){
+            socket =  new WebSocket('ws://yuanoook.com:7000');
+        },1000);
+    }
+}();
+
+function showMyspace(){
+    for(i in results) resultDiv(results[i]);
+}
+
+ajax({
+    type: 'get',
+    url: '/query',
+    callback: function(data){
+        results = JSON.parse(data);
+        showMyspace();
+    }
+});
+</script>
