@@ -1,0 +1,143 @@
+@charset "utf-8";
+body {
+    overflow: hidden;
+    font-family:"Helvetica Neue", Helvetica, "Microsoft Yahei", Arial, "sans-serif";
+    text-align: center;
+    word-break: break-all;
+    box-sizing: border-box;
+}
+* {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    box-sizing: inherit;
+}
+::selection {
+    color: none;
+    background-color: none;
+}
+.full-screen {
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    bottom: 0;
+}
+.bg-opacity{
+    background-color: rgba(0,0,0,.618);
+    color: #fff;
+}
+.hide {
+    display: none;
+}
+.space {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+.rediv {
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    box-shadow: 1px 1px 2px 1px #ccc;
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-color: #fff;
+}
+.rediv p {
+    margin: 3px;
+    font-size: 14px;
+    height: 65px;
+    line-height: 22px;
+    overflow: hidden;
+}
+.rediv span {
+    display: block;
+    position: absolute;
+    padding: 3px 5px;
+    bottom: 3px;
+    right: 3px;
+    background: white;
+    border: 1px dotted #eee;
+}
+.rediv a.download {
+    display: block;
+    position: absolute;
+    height: 20px;
+    bottom: 3px;
+    right: 3px;
+    left: 3px;
+    background: rgba(0,0,0,.618);
+    color: white;
+    text-decoration: none;
+}
+.rediv span.remove {
+    display: block;
+    position: absolute;
+    padding: 0;
+    border: 0;
+    width: 20px;
+    height: 20px;
+    line-height: 20px;
+    vertical-align: middle;
+    text-align: center;
+    top: 3px;
+    right: 3px;
+    background: rgba(0,0,0,.618);
+    color: white;
+}
+.labs {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    overflow: visible;
+    z-index: 100000000;
+}
+.gotoland{
+    position: fixed;
+    height: 100px;
+    width: 600px;
+    max-width: 100%;
+    padding: 25px 0;
+    font-size: 20px;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: 0 auto;
+    z-index: 100000000;
+}
+.gotoland span{
+    vertical-align: middle;
+}
+.gotoland input{
+    background: rgba(0,0,0,0);
+    border: 0;
+    height: 30px;
+    line-height: 30px;
+    vertical-align: middle;
+    font-size: 20px;
+    font-family:"Helvetica Neue", Helvetica, "Microsoft Yahei", Arial, "sans-serif";
+    color: white;
+    outline: none;
+    padding: 0 5px;
+}
+.gotoland .bt-yellow{
+    border-top: 1px solid rgb(255, 204, 0);
+    padding: 10px;
+    color: rgba(255,255,255,.418);
+    font-size: 16px;
+}
+.about{
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,.9);
+    color: white;
+    z-index: 100000000000;
+    vertical-align: middle;
+    line-height: 300%;
+}

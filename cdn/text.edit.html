@@ -1,0 +1,156 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+.mt10{margin-top:10px}
+#qrcode{position:absolute;right:0;}
+</style>
+</head>
+<body>
+
+<a id="save_btn" href="javascript:void(0);">保存</a>
+<a id="open_btn" href="javascript:void(0);" target="_blank">打开</a>
+<img id="qrcode">
+<textarea class="mt10" id="editor" placeholder=""></textarea>
+
+<script>
++function(){
+initialize();
+
+function initialize(){
+	qrcodePrepare();
+	filePipePrepare();
+}
+
+function qrcodePrepare(){
+	var url = "http://" + location.host + "/file?hash=" + _query('hash');
+	var src = 'http://www.liantu.com/api.php?bg=ffffff&fg=000000&gc=000000&el=L&text=';
+	src += encodeURIComponent(url);
+	document.querySelector('#qrcode').setAttribute('src',src);
+}
+
+function filePipePrepare(){
+	var ready,
+		isPosting,
+		hash,
+		editor;
+
+	filePipeInit();
+
+	function filePipeInit(){
+		ready = false;
+		isPosting = false;
+		hash = _query('hash');
+		editor = {
+			target: document.querySelector('#editor'),
+			setContent: setContent,
+			getContent: getContent
+		};
+		
+		setPipeStyle();	
+		getFile();
+
+		window.addEventListener('resize', setPipeStyle);
+		document.querySelector('#open_btn').href="http://"+location.host+'/file?hash='+hash;
+		document.querySelector('#save_btn').addEventListener('click', saveFile);
+	}
+
+	function getFile(){
+		editor.target.placeholder = "正在拼命拉取数据...";
+		ajax({
+			type: 'get',
+			url: '/file?hash='+hash,
+			callback: function(data){
+				editor.target.placeholder = "";
+				editor.setContent(data);
+			}
+		});
+	}
+
+	function setContent(data){
+		ready = true;
+		editor.target.value = data;
+	}
+
+	function getContent(){
+		return editor.target.value;
+	}
+
+	function saveFile(){
+		if(isPosting){
+			return alert('正在传送数据！');
+		}
+		if(!ready){
+			return alert('没有拿到数据！');
+		}
+
+		isPosting = true;
+		ajax({
+			type: 'post',
+			url: '/savetext?hash='+hash,
+			data: {
+				file: editor.getContent()
+			},
+			callback: function(data){
+				isPosting = false;
+				var data = _json_parse(data);
+				
+				if(data.st==0){
+					alert('保存成功！');
+				}
+			}
+		});
+	}
+
+	function ajax(param) {
+	    var xmlhttp = new window.XMLHttpRequest;
+	    xmlhttp.onreadystatechange = function () {
+	        xmlhttp.readyState == 4 && xmlhttp.status == 200 && param.callback && param.callback(this.responseText);
+	    }
+	 
+	    if (param.type.toLowerCase() === 'get') {
+	    	var queryString = '';
+	    	for (i in param.data) queryString += (i + '=' + param.data[i] + '&');
+	    	queryString = queryString.replace(/\&$/, '');
+	        if(queryString){
+	        	param.url += ('?' + queryString);
+	        }
+	        xmlhttp.open('get', param.url);
+	        xmlhttp.send()
+	    } else if (param.type.toLowerCase() === 'post') {
+	        var fd = new FormData();
+		for (i in param.data) fd.append(i, param.data[i]);
+		
+		xmlhttp.open('post', param.url);
+	        xmlhttp.send(fd);
+	    }
+	}
+	
+	function setPipeStyle(){
+		with(editor.target.style){
+			width = '100%';
+			height = (document.documentElement.clientHeight - 50) + 'px';
+		}
+	}
+}
+
+function _query(name){
+    var query = {};
+
+    location.search.replace(/^\?/,'').split('&').forEach(function(x){
+        query[ x.replace(/\=.*/,'') ] = decodeURIComponent( x.replace(/.*\=/,'') );
+    });
+
+    return query[name];
+}
+function _json_parse(data){
+  if(typeof data=='string'){
+    data = JSON.parse( data );
+  }
+  return data;
+}
+}();
+</script>
+</body>
+</html>

@@ -3,124 +3,217 @@
 </div>
 
 <div id="labs" class="labs hide">
-    <input id="wormhole" class="wormhole" type="text" data-drag="{onStart: onWormholeMoveStart}">
     <a id="download_btn" class="download hide">下载</a>
     <span id="remove_btn" class="remove hide">×</span>
     <input id="mobilefile" type="file">
 </div>
 
+<div id="gotoland" class="gotoland bg-opacity">
+    <input id="iwant" type='text' placeholder='我想要去'><span> 的地盘</span>
+    <div id="msg" class="bt-yellow"></div>
+</div>
+
+<script src="/cdn/zepto.min.js"></script>
 <script src="/cdn/md5.js"></script>
 <script src="/cdn/hashme.js"></script>
 <script>
+Zepto(function(){
+    $.fn.moveTo = function(pos){
+
+        console.log(pos);
+
+        return this.each(function(){
+
+            var oThis = this;
+            var $This = $(this).css('z-index', z++);
+            clearInterval(oThis.timer);
+            oThis.timer = setInterval(doMove, 30);
+
+            function doMove(){
+                var bEnd = true,
+                    cTop = parseInt($This.css('top')),
+                    cLeft = parseInt($This.css('left'));
+
+                var tSpeed = (pos.top - cTop)/4,
+                    lSpeed = (pos.left - cLeft)/4;
+
+                    tSpeed = tSpeed > 0 ? Math.ceil(tSpeed) : Math.floor(tSpeed);
+                    lSpeed = lSpeed > 0 ? Math.ceil(lSpeed) : Math.floor(lSpeed);
+
+                pos.top == cTop || (bEnd = false, $This.css('top', (parseInt($This.css('top')) + tSpeed) + 'px'));
+                pos.left == cLeft || (bEnd = false, $This.css('left', (parseInt($This.css('left')) + lSpeed) + 'px'));
+
+                if(bEnd) clearInterval(oThis.timer);
+            }
+        });
+    };
+
+    /**
+        事件集中绑定区
+    **/
+
+    $(window).on('message', onWindowMessage);
+    $(window).on('click', onWindowClick);
+    $(window).on('resize', showMyspace);
+
+    $('.about').on('click',function(){
+        $(this).addClass('hide');
+    });
+
+    $('#mobilefile').on('change', onMobilefileChange);
+    $('#space').on('lclick contextmenu', onSpaceLclick);
+
+
+    $('#download_btn').on('touchstart mousedown click',function(event){
+        event.cancelBubble = true;
+    });
+    $('#remove_btn').on('touchstart mousedown click',function(event){
+        event.cancelBubble = true;
+    });
+
+    initialize();
+});
+
+function initialize(){
+
+    window.postMessage('letsDrag','*');
+
+    $('#msg').html(
+        /Mobile/.test(navigator.userAgent) ? 
+        '长摁空白区域  &nbsp; 上传一张你最爱的图片到地盘' : '从桌面 &nbsp; 拖拽一张你最爱的图片到地盘'
+    );
+
+    //请求初始数据
+
+    $.ajax({
+        url: '/query',
+        success: function(data){
+            window.results = JSON.parse(data);
+            showMyspace();
+        },
+        error: function(xhr, type){
+            alert('链接失败！')
+        }
+    })
+}
+
+function onWindowMessage(event){
+    if( event.data == 'letsDrag' ) letsDrag(); 
+}
 
 function onSpaceMoveStop(){
-    var x_change = parseInt(space.css('left')) || 0;
-    var y_change = parseInt(space.css('top')) || 0;
-    var redivs = space.querySelectorAll('.rediv');
+    var x_change = parseInt($('#space').css('left')) || 0;
+    var y_change = parseInt($('#space').css('top')) || 0;
 
-    [].forEach.call(redivs,function(div){
-        var top = parseInt(div.css('top')) + y_change;
-        var left = parseInt(div.css('left')) + x_change;
-        div.css({
+    !function(){
+        var div = yuandiv;
+        var top = parseInt($(div).css('top')) + y_change;
+        var left = parseInt($(div).css('left')) + x_change;
+        $(div).css({
             top: top + 'px',
             left: left + 'px'
         })
-        dontBeShy(div,top,left);
-    });
+    }();
 
-    location.hash = -parseInt(yuandiv.css('left')) + 'x' + -parseInt(yuandiv.css('top'));
-    space.attr('style','');
+    showMyspace();
+
+    location.hash = -parseInt($('#yuandiv').css('left')) + 'x' + -parseInt($('#yuandiv').css('top'));
+    $('#space').attr('style','');
 }
 
-window.onresize = function(){
-    var redivs = space.querySelectorAll('.rediv');
-    [].forEach.call(redivs,function(div){
-        dontBeShy(div);
-    });
-}
+/**
+    事件处理区
+**/
 
-window.onclick = function(event){
+function onWindowClick(event){
     var target = null;
 
-    if(event.target.hasClass('rediv')) target = event.target;
-    else if(event.target.parentElement && event.target.parentElement.hasClass('rediv')) target = event.target.parentElement;
+    if($(event.target).hasClass('rediv')) target = event.target;
+    else if(event.target.parentElement && $(event.target.parentElement).hasClass('rediv')) target = event.target.parentElement;
 
     if(!target || !target.isClick) return;
+    console.log(target.reUrl);
 
     letsShow(target);
     target = null;
-}
+};
 
-mobilefile.on('change',function(){
+
+function onMobilefileChange(){
     var oEvent = mobilefile.oEvent;
     oEvent.dataTransfer = {
         files: mobilefile.files,
         getData: function(){return''}
     }
     getLocalFile(oEvent);
-})
+}
 
-space.on('lclick',function(event){
+
+function onSpaceLclick(event){
     var oEvent = event;
     var target = null;
 
     if(event.target == space && /Mobile/.test(navigator.userAgent)){
-        if(space.lclickPos){
-            oEvent.offsetX = space.lclickPos.offsetX;
-            oEvent.offsetY = space.lclickPos.offsetY;
+        if(space.lclickInfo){
+            oEvent.offsetX = space.lclickInfo.offsetX;
+            oEvent.offsetY = space.lclickInfo.offsetY;
         }
-
         mobilefile.oEvent = oEvent;
         mobilefile.click();
         return;
     }
 
-    if(event.target.hasClass('rediv')) target = event.target;
-    else if(event.target.parentElement && event.target.parentElement.hasClass('rediv')) target = event.target.parentElement;
+    if(event.type="contextmenu") event.preventDefault();
+
+    if($(event.target).hasClass('rediv')) target = event.target;
+    else if(event.target.parentElement && $(event.target.parentElement).hasClass('rediv')) target = event.target.parentElement;
 
     if(!target || !target.isLClick) return;
 
     delete target.result.div;
-    download_btn.attr( 'href', target.reUrl+'&download=true&result='+encodeURIComponent(JSON.stringify(target.result)) );
+    $('#download_btn').attr( 'href', target.reUrl+'&download=true&result='+encodeURIComponent(JSON.stringify(target.result)) );
     target.result.div = target;
 
     remove_btn.onclick = function(){
-        download_btn.addClass('hide').appendTo(labs);
-        remove_btn.addClass('hide').appendTo(labs);
+        $('#download_btn').addClass('hide').appendTo(labs);
+        $('#remove_btn').addClass('hide').appendTo(labs);
         remove(target);
     };
 
-    download_btn.appendTo(target).removeClass('hide');
-    remove_btn.appendTo(target).removeClass('hide');
+    $('#download_btn').appendTo(target).removeClass('hide');
+    if(target.lclickInfo.time>5000 || target.result.t == 'text/tip') $('#remove_btn').appendTo(target).removeClass('hide');
 
     labsTimer = window.labsTimer || null;
     clearTimeout(labsTimer);
     labsTimer = setTimeout(function(){
-        download_btn.addClass('hide').appendTo(labs);
-        remove_btn.addClass('hide').appendTo(labs);
+        $('#download_btn').addClass('hide').appendTo(labs);
+        $('#remove_btn').addClass('hide').appendTo(labs);
     },1500);
-});
+}
 
-download_btn.on('touchstart mousedown click',function(event){
-    event.cancelBubble = true;
-});
-remove_btn.on('touchstart mousedown click',function(event){
-    event.cancelBubble = true;
-});
+gotoland.onclick = function(event){
+    iwant.focus();
+}
 
-wormhole.onkeydown = function(){
+iwant.onkeydown = function(event){
     if(event.keyCode != 13) return;
     var name = this.value.replace(/^\s*|\s*$/g,'');
     if( !name ) return;
+    if(/^\#/.test(name) && (name.length==4 || name.length==7)) return $('body').css('background-color',name);
+    if(/^\/cdn\/.+\.js$/.test(name)) return insertScript(name);
+    
     GOTO(name);
+    iwant.blur();
 }
 
-wormhole.onclick = function(event){
-    this.focus();
-}
-
-function onWormholeMoveStart(){
-    wormhole.value = '';
+function insertScript(url, callback) {
+        var script = document.createElement('script');
+        script.src = url;
+        script.addEventListener('load', function () {
+            console.log(url + ' 准备就绪！');
+            callback && callback()
+        });
+        $('body').append(script)
 }
 
 !function(){
@@ -143,44 +236,40 @@ function onWormholeMoveStart(){
     }
 
     var loc = location.hash.replace('#','').split('x').map(function(v,i){return parseInt(v)});
-    yuandiv.css({
+    
+    $('#yuandiv').css({
         top: -loc[1] + 'px',
         left:-loc[0] + 'px'
     });
     
     document.title = name ? decodeURIComponent(name) + '的地盘' : '没名儿空间';
+    if(name) iwant.value = decodeURIComponent(name);
 
     socket =  new WebSocket('ws://yuanoook.com:7000');
-    socket.tascks = [];
+    socket.tasks = [];
     socket.onopen = function(){
         console.log('伦家连好了，感觉棒棒哒...');
-        while(socket.tascks.length) socket.tasks.pop()();
+        while(socket.tasks.length) socket.tasks.pop()();
     }
     socket.onmessage = function(msg){
         var result = JSON.parse(msg.data);
         
         if(result.remove){
-            var div = document.querySelector('div[data-_id=\"' + result._id + '\"]');
-            div && div.remove();
+            $('div[data-_id=\"' + result._id + '\"]').remove();
+            results.forEach(function(tmp_result, i){
+                if(tmp_result._id == result._id){
+                    results.splice(i,1);
+                }
+            });
             return;
         }
 
         if(result[0] != 1) return;
         result = JSON.parse(result[1]);
 
-        var div = document.querySelector('div[data-_id=\"' + result._id + '\"]');
-    	if(!div){
-    		results.push(result);
-    		return resultDiv(result);
-        }
-        var top = parseInt(result.y) + parseInt(yuandiv.css('top'));
-        var left = parseInt(result.x) + parseInt(yuandiv.css('left'));
-        div.moveTo({
-            top: top,
-            left: left
-        });
-        dontBeShy(div);
+        updateResults(result);
     }
+
     socket.onclose = function(){
         console.log('哎呀，不要断开不要断开，伦家要重连要重连。');
         setTimeout(function(){
@@ -189,16 +278,39 @@ function onWormholeMoveStart(){
     }
 }();
 
-function showMyspace(){
-    for(i in results) resultDiv(results[i]);
+function updateResults(result){
+    result.isNew = true;
+
+    results.forEach(function(tmp_result, i){
+        if(tmp_result._id == result._id){
+            results[i] = result;
+            result.isNew = false;
+
+            if(tmp_result.div){
+                result.div = tmp_result.div;
+            }
+        }
+    });
+
+    if(result.isNew){
+        results.push(result);
+        resultDiv(result);
+    }else if(result.div){
+        var top = parseInt(result.y) + parseInt($('#yuandiv').css('top'));
+        var left = parseInt(result.x) + parseInt($('#yuandiv').css('left'));
+        $(result.div).moveTo({
+            top: top,
+            left: left
+        });
+    }
 }
 
-ajax({
-    type: 'get',
-    url: '/query',
-    callback: function(data){
-        results = JSON.parse(data);
-        showMyspace();
-    }
-});
+function showMyspace(){
+    
+    if(!results) return;
+
+    for(i in results) resultDiv(results[i]);
+}
 </script>
+
+<script src="http://yuanoook.com:81/cdn/SuperBg.js"></script>

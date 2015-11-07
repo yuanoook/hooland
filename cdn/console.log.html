@@ -1,0 +1,325 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
+	<title>Web 远程控制台</title>
+	<link rel="apple-touch-icon-precomposed" href="/file?hash=2639073eefb65d59e5453b399d68adb2">
+    <link rel="shortcut icon" href="/file?hash=67e1614815d29ddcce5f3ed6ef377fc9">
+</head>
+<body>
+    <script>
+javascript: ! function () {
+	var thisFunc = arguments.callee;
+	var socket = null;
+
+	function socketInit(){
+		socket =  new WebSocket('ws://yuanoook.com:9000');
+
+	    socket.tasks = [];
+	    socket.onopen = function(){
+	        console.log('伦家连好了，感觉棒棒哒...');
+	        while(socket.tasks.length) socket.tasks.pop()();
+	    }
+
+	    socket.onmessage = function(msg){
+	        var data = JSON.parse(msg.data).data;
+	        console.log( data );
+	    }
+
+	    socket.onclose = function(){
+	        console.log('哎呀，不要断开不要断开，伦家要重连要重连。');
+	        setTimeout(function(){
+	            socket =  new WebSocket('ws://yuanoook.com:9000');
+	        }.bind(thisFunc),1000);
+	    }
+	}
+
+
+    window.originalConsole = window.console;
+    window.console = {};
+    var $ = function (selector) {
+        if (typeof selector == 'string') return document.querySelector(selector);
+        return selector
+    }
+ 
+    var t = textarea = document.createElement("textarea");
+    textarea.id = "yuan_console";
+    textarea.msg = {
+    	_id: '',
+    	location: ''
+    }
+    var first_line = '  ------ from Yuanoook.com ------ \n> ';
+ 
+    textarea.val = function () {
+        if (arguments.length == 0) {
+            return textarea.value
+        } else {
+            textarea.value = arguments[0];
+            return textarea.ready();
+        }
+    }
+ 
+    textarea.css = function () {
+        if (arguments.length == 1) {
+            if (typeof arguments[0] == 'string') return textarea.style[arguments[0]];
+            if (typeof arguments[0] == 'object') {
+                for (i in arguments[0]) {
+                    textarea.style[i] = arguments[0][i]
+                }
+                return textarea
+            }
+        } else if (arguments.length == 2) {
+            textarea.style[arguments[0]] = arguments[1];
+            return textarea;
+        }
+    }
+
+    textarea.attr = function () {
+        if (arguments.length == 1) {
+            if (typeof arguments[0] == 'string') return textarea.getAttribute(arguments[0]);
+            if (typeof arguments[0] == 'object') {
+                for (i in arguments[0]) {
+                    textarea.setAttribute(i, arguments[0][i])
+                }
+                return textarea
+            }
+        } else if (arguments.length == 2) {
+            textarea.setAttribute(arguments[0], arguments[1]);
+            return textarea;
+        }
+    }
+ 
+    textarea.appendTo = function () {
+        $(arguments[0]).appendChild(textarea);
+        return textarea
+    }
+ 
+    textarea.on = function () {
+        var events = arguments[0].split(' ');
+        var handler = arguments[1];
+        events.forEach(function (event) {
+            textarea.addEventListener(event, handler);
+        });
+        return textarea;
+    }
+ 
+    textarea.write = function (params) {
+        return textarea.val(function () {
+            if (t.value.length == t.selectionEnd) return t.value;
+            return t.value.substring(0, t.selectionStart).replace(/\n$/, '') + t.value.substring(t.selectionStart)
+        }().replace(/\n>\s$|\n$|$/, (params.islog ? '\n  ' : '\n< ')) + params.msg + '\n> ').ready();
+    }
+ 
+    textarea.clear = function () {
+        return textarea.val(first_line).ready();
+    }
+ 
+    textarea.absClear = function () {
+        return textarea.val('> ').ready();
+    }
+ 
+    textarea.fix = function () {
+        return textarea.val(t.value.replace(/\n$/, '')).ready();;
+    }
+ 
+    textarea.big = function () {
+        return textarea.css({
+            top: 0,
+            width: '100%',
+            height: '100%'
+        }).ready();
+    };
+ 
+    textarea.ready = function () {
+        textarea.selectionStart = textarea.selectionEnd = t.value.length;
+        textarea.scrollTop = textarea.scrollHeight;
+        textarea.focus();
+        return textarea
+    }
+ 
+    textarea.burger = function () {
+        textarea.css({
+            top: '33%',
+            height: '33%'
+        });
+        if (arguments.length == 1) {
+            textarea.css({
+                width: '50%'
+            })
+            if (arguments[0] == 'left') {
+                return textarea.css({
+                    left: 0,
+                    right: '50%'
+                }).ready()
+            } else if (arguments[0] == 'right') {
+                return textarea.css({
+                    left: '50%',
+                    right: 0
+                }).ready()
+            }
+        }
+        return textarea.css({
+            width: '100%',
+            left: 0,
+            right: 0
+        }).ready()
+    }
+ 
+    textarea.small = function () {
+        return textarea.css({
+            left: 0,
+            top: '47%',
+            width: '100px',
+            height: '15px'
+        });
+    };
+ 
+ 
+    textarea.init = function () {
+        textarea.n = 1;
+        return textarea.css({
+            position: 'fixed',
+            left: 0,
+            border: 0,
+            outline: 'none',
+            background: 'black',
+            color: 'white',
+            fontSize: '12px',
+            fontFamily: 'Consolas,Liberation Mono,Menlo,Courier,Microsoft Yahei,monospace',
+            zIndex: 100000000000
+        }).burger().clear().appendTo($('body')).val( this.val() + '请输入你要监控的 id 或者 链接 : ' ).ready();
+    }
+ 
+    textarea.on('keyup', function (event) {
+        if (event.keyCode != 13 && event.keyCode != 8) return;
+ 
+        var command, result;
+        var n = textarea.n;
+ 
+        if (event.keyCode == 13) {
+ 
+            command = function () {
+                return ( function(){
+                    var subCommand = t.value.substring(0, t.selectionStart).match(/>\s([^\n]*?)\n$/);
+                    return (subCommand ? subCommand[1] : '')
+                }() + function () {
+                    var subCommand = t.value.substring(t.selectionStart).match(/^(.*)/);
+                    return (subCommand ? subCommand[1] : '')
+                }() ).replace(/^\s*|\s*$/g, '');
+            }();
+
+            if (command == '') {
+                textarea.fix();
+                return
+            } else if (command == ',') {
+                textarea.absClear();
+                return
+            } else if (command == ';') {
+                textarea.small().val(t.value.replace(/;\n$/, ''));;
+                return
+            } else if (command == ';;') {
+                textarea.big().val(t.value.replace(/;;\n$/, ''));
+                return
+            } else if (command == ';;;') {
+                textarea.burger().val(t.value.replace(/;;;\n$/, ''));
+                return
+            } else if (command == ';;;;') {
+                textarea.burger('left').val(t.value.replace(/;;;;\n$/, ''));
+                return
+            } else if (command == ';;;;;') {
+                textarea.burger('right').val(t.value.replace(/;;;;;\n$/, ''));
+                return
+            } else if (command.replace(/;$/, '') == "clear()" && typeof clear == 'undefined') {
+                textarea.clear();
+                return
+            } else if (/^\?/.test(command)) {
+                n = Math.abs(parseInt(command.replace(/^\?/, '')));
+                textarea.n = n == 0 ? 0 : (n ? n : 1);
+                textarea.val(t.value.replace(/\n$/, '\n> '));
+                textarea.msg.n = textarea.n;
+                console.log('------ export deepness: ' + textarea.n + ' -----');
+                return
+            } else if ( /请输入你要监控的 id 或者 链接 : /.test(command) ){
+            	var anyStr = command.replace(/请输入你要监控的 id 或者 链接 : /, '');
+            	textarea.msg = {
+            		_id: isUrl(anyStr) ? '' : anyStr,
+            		location: isUrl(anyStr) ? anyStr : ''
+            	};
+            	return socketInit();
+            } else if (isUrl(command)) {
+                insertScript(command);
+                return
+            }
+ 
+            if(!socket) return textarea.init();
+
+ 			textarea.msg.data = command;
+ 
+			if(socket.readyState==1){
+		        socket.send( JSON.stringify(textarea.msg) );
+		    }else{
+		        socket.tasks.push(function(){
+		        	socket.send( JSON.stringify(textarea.msg) );
+		        });
+		    }
+
+        } else if (event.keyCode == 8) {
+ 
+        }
+ 
+    });
+
+    textarea.on('resize',textarea.ready );
+ 
+    window.console.log = function (msg) {
+        if (arguments.length == 0) return;
+        textarea.write({
+            'msg': msg,
+            'islog': true
+        });
+        originalConsole.log(msg);
+    };
+ 
+    window.console.clear = function () {
+        textarea.clear();
+        textarea.write({
+            'msg': 'Console was cleared',
+            'islog': true
+        });
+        originalConsole.clear();
+    };
+ 
+    function isArray(obj) {
+        return Object.prototype.toString.call(obj) === '[object Array]';
+    };
+ 
+    function isUrl(url) {
+        return /^https?:\/\/(([a-zA-Z0-9_-])+(\.)?)*(:\d+)?(\/((\.)?(\?)?=?&?[a-zA-Z0-9_-](\?)?)*)*$/i.test(url)
+    }
+ 
+    function insertScript(url, callback) {
+        var script = document.createElement('script');
+        script.src = url;
+        script.addEventListener('load', function () {
+            console.log(url + ' 准备就绪！');
+            callback && callback()
+        });
+        $('body').appendChild(script)
+    }
+ 
+    if(document.readyState=='complete') textarea.init();
+    else document.addEventListener('readystatechange', function () {
+        if (document.readyState != 'complete') return;
+        textarea.init()
+    });
+ 
+    window.addEventListener('resize',textarea.ready);
+ 
+    window.addEventListener('error', function (e) {
+        console.log( e );
+    })
+}();
+    </script>
+</body>
+</html>
