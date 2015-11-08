@@ -107,9 +107,9 @@ function onSpaceMoveStop(){
 
     !function(){
         var div = yuandiv;
-        var top = parseInt($(div).css('top')) + y_change;
-        var left = parseInt($(div).css('left')) + x_change;
-        $(div).css({
+        var top = parseInt($(div).attr('top')) + y_change;
+        var left = parseInt($(div).attr('left')) + x_change;
+        $(div).attr({
             top: top + 'px',
             left: left + 'px'
         })
