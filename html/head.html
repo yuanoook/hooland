@@ -27,8 +27,8 @@ function getLocalFile(event) {
 
     var posx = event.offsetX-38;
     var posy = event.offsetY-38;
-    posx = posx - parseInt($('#yuandiv').css('left'));
-    posy = posy - parseInt($('#yuandiv').css('top'));
+    posx = posx - parseInt($('#yuandiv').attr('left'));
+    posy = posy - parseInt($('#yuandiv').attr('top'));
 
     console.log([posx,posy]);
 
@@ -147,8 +147,8 @@ function changePosition(_id) {
 
     var arg = div.result;
     delete arg.div;
-    arg.x = parseInt($(div).css('left')) - parseInt($('#yuandiv').css('left'));
-    arg.y = parseInt($(div).css('top')) - parseInt($('#yuandiv').css('top'));
+    arg.x = parseInt($(div).css('left')) - parseInt($('#yuandiv').attr('left'));
+    arg.y = parseInt($(div).css('top')) - parseInt($('#yuandiv').attr('top'));
 
     if(socket.readyState==1){
         socket.send(JSON.stringify(arg));
@@ -162,8 +162,8 @@ function changePosition(_id) {
 
 function resultDiv(result){
     var div = result.div || document.createElement('div');
-    var top = parseInt(result.y) + parseInt($('#yuandiv').css('top'));
-    var left = parseInt(result.x) + parseInt($('#yuandiv').css('left'));
+    var top = parseInt(result.y) + parseInt($('#yuandiv').attr('top'));
+    var left = parseInt(result.x) + parseInt($('#yuandiv').attr('left'));
 
     /**
         新增判断：
@@ -324,7 +324,7 @@ function GOTO(){
 
     var loc = location.hash.replace('#','').split('x').map(function(v,i){return parseInt(v)});
     
-    $('#yuandiv').css({
+    $('#yuandiv').attr({
         top: -loc[1] + 'px',
         left:-loc[0] + 'px'
     });

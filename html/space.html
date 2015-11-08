@@ -117,7 +117,7 @@ function onSpaceMoveStop(){
 
     showMyspace();
 
-    location.hash = -parseInt($('#yuandiv').css('left')) + 'x' + -parseInt($('#yuandiv').css('top'));
+    location.hash = -parseInt($('#yuandiv').attr('left')) + 'x' + -parseInt($('#yuandiv').attr('top'));
     $('#space').attr('style','');
 }
 
@@ -237,7 +237,7 @@ function insertScript(url, callback) {
 
     var loc = location.hash.replace('#','').split('x').map(function(v,i){return parseInt(v)});
     
-    $('#yuandiv').css({
+    $('#yuandiv').attr({
         top: -loc[1] + 'px',
         left:-loc[0] + 'px'
     });
@@ -296,8 +296,8 @@ function updateResults(result){
         results.push(result);
         resultDiv(result);
     }else if(result.div){
-        var top = parseInt(result.y) + parseInt($('#yuandiv').css('top'));
-        var left = parseInt(result.x) + parseInt($('#yuandiv').css('left'));
+        var top = parseInt(result.y) + parseInt($('#yuandiv').attr('top'));
+        var left = parseInt(result.x) + parseInt($('#yuandiv').attr('left'));
         $(result.div).moveTo({
             top: top,
             left: left
