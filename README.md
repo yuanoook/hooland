@@ -24,4 +24,4 @@ html 文件可以跳转打开，非常适合快速移动端测试。电脑端拖
 
 技术：mongodb + nodejs + javascript。
 
-站点: http://yuanoook.com
+站点: http://fly.yuanoook.com
