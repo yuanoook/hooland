@@ -3,7 +3,7 @@ var ObjectID = require('mongodb').ObjectID;
 var files,
     filesBirthPlace,
     filesHeaven;
-MongoClient.connect("mongodb://yuanoook:3wloving@localhost:7001/yuanspace", {
+MongoClient.connect("mongodb://localhost:7001/yuanspace", {
     db: {
         native_parser: false
     },
